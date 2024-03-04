@@ -3,6 +3,7 @@ export CUDA_VISIBLE_DEVICES=0
 model_name=TimesNet
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
@@ -27,6 +28,7 @@ python -u run.py \
   --loss 'SMAPE'
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
@@ -51,6 +53,7 @@ python -u run.py \
   --loss 'SMAPE'
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
@@ -75,6 +78,7 @@ python -u run.py \
   --loss 'SMAPE'
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
@@ -99,6 +103,7 @@ python -u run.py \
   --loss 'SMAPE'
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
@@ -123,6 +128,7 @@ python -u run.py \
   --loss 'SMAPE'
 
 python -u run.py \
+  --data_path "m4-info.csv" \
   --task_name short_term_forecast \
   --is_training 1 \
   --root_path ./dataset/m4 \
