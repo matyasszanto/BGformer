@@ -10,7 +10,7 @@ from utils.print_args import print_args
 import random
 import numpy as np
 
-if __name__ == '__main__':
+def main(raw_args = None):
     fix_seed = 2021
     random.seed(fix_seed)
     torch.manual_seed(fix_seed)
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     parser.add_argument('--p_hidden_layers', type=int, default=2, help='number of hidden layers in projector')
 
 
-    args = parser.parse_args()
+    args = parser.parse_args(raw_args)
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 
     if args.use_gpu and args.use_multi_gpu:
@@ -176,3 +176,6 @@ if __name__ == '__main__':
         print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
         exp.test(setting, test=1)
         torch.cuda.empty_cache()
+
+if __name__ == "__main__":
+    main()
