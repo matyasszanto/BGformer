@@ -159,7 +159,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 
 .idea/
-data/
+data/OhioT1DM
+data/*.csv
+data/ICU_data/*.csv
+*.png
 
 
 Autoformer/
@@ -171,5 +174,16 @@ TimeSeriesLibrary/checkpoints/
 lightning_logs
 
 *.bat
+
+
+full_dataset_hourly.csv
+full_dataset.csv
+
+*.pdf
+models/
+checkpoints/
+m4_results/
+
+TimeSeriesLibrary/*
 
 
