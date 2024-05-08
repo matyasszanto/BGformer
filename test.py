@@ -62,8 +62,6 @@ def run(models = None, debug = False):
 
         model_metrics_df = pd.DataFrame(model_metrics, index=[0])
         metrics = pd.concat([metrics, model_metrics_df], ignore_index=True)
-    
-    metrics.set_index('Model Name', inplace=True)
 
 
     # plot
