@@ -4,8 +4,6 @@ from utils import to_datetime, connect_gt_and_pred
 
 from statsforecast import StatsForecast
 from neuralforecast import NeuralForecast
-# from neuralforecast.models import NHITS, TimesNet, FEDformer, Informer, Autoformer
-from neuralforecast.losses.pytorch import MQLoss
 
 def run(config = None):
     if config['models'] == []:
