@@ -1,10 +1,12 @@
 import wandb
 import numpy as np
 import train, test
-from neuralforecast.models import NHITS, TimesNet, FEDformer, Informer, Autoformer
+
 
 config = {
-        'models': [TimesNet, FEDformer, Informer, Autoformer]
+        # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
+        'models': ["TimesNet", "NHITS"],
+        'TN_topk': 4,
     }
 wandb.init(
     entity='szanto-matyas',
