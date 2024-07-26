@@ -1,6 +1,7 @@
 import pandas as pd
+import pathlib
 
-from utils import to_datetime, connect_gt_and_pred
+from utils import to_datetime, find_all_continuous_snippets
 
 from statsforecast import StatsForecast
 from neuralforecast import NeuralForecast
@@ -17,14 +18,31 @@ def run(config=None, debug=False):
 
     elif 'TN_topk' not in config.keys():
         config['TN_topk'] = 3
-    
-    Y_df = pd.read_csv("preliminary/full_dataset_hourly.csv")
+
+# read data
+
+    # ICU data
+    basepath = pathlib.Path(__file__).parent.resolve()
+    csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
+
+    # OhioT1DM data
+    # csv_path = "data/OhioT1DM/full_dataset_hourly.csv"
+
+    Y_df = pd.read_csv(csv_path)
+    if 'Unnamed: 0' in Y_df.columns:
+        Y_df.drop(columns=['Unnamed: 0'], inplace=True)
+
+
     timestamps = Y_df['ds']
     new_timestamps = timestamps.apply(to_datetime)
     Y_df['ds'] = new_timestamps
+    if 'bg' in Y_df.columns:
+        Y_df.rename(columns={'bg': 'y'}, inplace=True)
 
     uids = Y_df['unique_id'].unique()
     Y_df = Y_df.query('unique_id in @uids').reset_index(drop=True)
+
+    Y_df = find_all_continuous_snippets(Y_df)
     
     freq = 'h' # h or min
     horizon = 3 if freq=='h' else 90
@@ -44,11 +62,7 @@ def run(config=None, debug=False):
         freq=freq
     )
 
-    df_cv = nf.cross_validation(Y_df, n_windows=1)
-
-    df_to_plot = connect_gt_and_pred(df_gt=Y_df, df_pred=df_cv)
-
-    plot = StatsForecast.plot(Y_df, df_to_plot.drop(columns=['y', 'cutoff']), max_insample_length=1260)
+    _ = nf.cross_validation(Y_df, n_windows=1)
 
     print('\n\n\n')
     print("-----------------------------")
@@ -56,7 +70,7 @@ def run(config=None, debug=False):
     print("-----------------------------")
     print('\n\n\n')
 
-    return nf, plot
+    return nf
 
 if __name__ == '__main__':
     run(debug=True)
