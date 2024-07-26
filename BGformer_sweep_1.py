@@ -12,15 +12,13 @@ def experiment():
     
     wandb.init()
     
-    nf, plot_train = train.run(config=wandb.config)
+    nf = train.run(config=wandb.config)
     plot_test, metrics = test.run(models=nf)
 
-    image_train = wandb.Image(plot_train, caption=f'train plots')
     image_test = wandb.Image(plot_test, caption=f'test plots')
 
     wandb.log(
         {
-        'training plots': image_train,
         'test plots': image_test,
         'metrics': metrics,
         'best RMSE': min(metrics['RMSE'])
@@ -39,7 +37,7 @@ config = {
     'parameters': {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
         'models': {
-            'values': ['TimesNet', 'FEDformer', 'Autoformer'],
+            'values': ['TimesNet', 'FEDformer'],
         },
         # 'TN_topk': {
         #     'values': [2, 3, 4, 5, 6]
