@@ -12,7 +12,7 @@ from neuralforecast import NeuralForecast
 from neuralforecast.losses.numpy import mae, mse, rmse
 
 
-def run(models = None, debug = False):
+def run(models = None, debug = False, horizon = 3):
     
     if debug:
         # load pretrained model
@@ -23,23 +23,20 @@ def run(models = None, debug = False):
         plot = plt.imshow(np.zeros((200, 200)))
         return plot
 
-    # set up horizon length
-    horizon = 3
-
     # read data
 
-    # ICU data
     basepath = pathlib.Path(__file__).parent.resolve()
+
+    # ICU data
     csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
 
     # OhioT1DM data
-    # csv_path = "data/OhioT1DM/full_dataset_hourly.csv"
+    csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
 
     Y_df = pd.read_csv(csv_path)
     if 'Unnamed: 0' in Y_df.columns:
         Y_df.drop(columns=['Unnamed: 0'], inplace=True)
-
-
+    
     # set up timestamps
     timestamps = Y_df['ds']
     new_timestamps = timestamps.apply(to_datetime)
@@ -47,17 +44,12 @@ def run(models = None, debug = False):
     if 'bg' in Y_df.columns:
         Y_df.rename(columns={'bg': 'y'}, inplace=True)
 
-    # Y_df = find_all_continuous_snippets(Y_df)
+    Y_df = find_all_continuous_snippets(Y_df)
 
     # drop last horizon length y values for prediction
-    # TODO should be reworked to not only provide results for nighttime
-    ids_to_drop = []
-    ids_to_drop_for_comparison = []
-    for i, row in enumerate(Y_df.iterrows()):
-        if row[1]['ds'].hour>=21:
-            ids_to_drop.append(i)
-        if row[1]['ds'].hour<21:
-            ids_to_drop_for_comparison.append(i)
+    ids_to_drop = [i for i in range(len(Y_df)) if i % 24 >= 24-horizon]
+    ids_to_drop_for_comparison = [i for i in range(len(Y_df)) if i % 24 < 24-horizon]
+
     Y_df_window = Y_df.drop(ids_to_drop)
     Y_df_gt = Y_df.drop(ids_to_drop_for_comparison)
 
