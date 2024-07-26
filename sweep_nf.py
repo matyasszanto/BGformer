@@ -14,15 +14,15 @@ wandb.init(
     config=config,
 )
 
-nf, plot_train = train.run(config=config)
+nf = train.run(config=config)
 plot_test, metrics = test.run(models = nf)
 
-image_train = wandb.Image(plot_train, caption=f'train plots')
+# image_train = wandb.Image(plot_train, caption=f'train plots')
 image_test = wandb.Image(plot_test, caption=f'test plots')
 
 wandb.log(
     {
-     'training plots': image_train,
+    #  'training plots': image_train,
      'test plots': image_test,
      'metrics': metrics,
     }
