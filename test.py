@@ -36,7 +36,16 @@ def run(config, models = None, debug = False, horizon = 3):
 
     # predict
     Y_hat_df_2 = models.predict(df=Y_df_window).reset_index()
-    
+
+    if config['normalize']:
+
+        # denormalize GT values
+        Y_df_gt['y'] = data.scaler.inverse_transform(Y_df_gt['y'].values.reshape(-1,1))
+        Y_df['y'] = data.scaler.inverse_transform(Y_df['y'].values.reshape(-1,1))
+        
+        # denormalize predicted values
+        for model in models.models:
+            Y_hat_df_2[str(model)] = data.scaler.inverse_transform(Y_hat_df_2[str(model)].values.reshape(-1,1))
 
     # calculate metrics
     metrics_cols = ['Model Name', 'MAE', 'MSE', 'RMSE']
@@ -79,5 +88,6 @@ if __name__ == "__main__":
         "models": "NHITS",
         'train_dataset': 'ICU',
         'test_dataset': 'Ohio',
+        'normalize': True,
     }
     run(config=debug_config, debug=True)

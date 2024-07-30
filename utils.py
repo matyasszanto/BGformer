@@ -12,7 +12,8 @@ class dataloader():
         self.dataframe = self.read_dataset(train=train)
         self.min_bg = 0
         self.max_bg = 0
-        self.normalize()
+        if config['normalize']:
+            self.normalize()
         
 
     def read_dataset(self, train):
@@ -51,8 +52,8 @@ class dataloader():
         """
         self.min_bg = min(self.dataframe['y'])
         self.max_bg = max(self.dataframe['y'])
-        scaler = MinMaxScaler()
-        self.dataframe['y'] = scaler.fit_transform(self.dataframe['y'].values.reshape(-1,1))
+        self.scaler = MinMaxScaler()
+        self.dataframe['y'] = self.scaler.fit_transform(self.dataframe['y'].values.reshape(-1,1))
 
 
     # Function to find all continuous snippets
@@ -100,6 +101,7 @@ def connect_gt_and_pred(df_gt, df_pred, horizon=3):
     cv_df_output = pd.DataFrame()
     added_rows = 0
     gt_uids = Y_df_2['unique_id'][::24].to_numpy()
+
     for i in tqdm(range(len(pred_df_2))):
         if i % horizon == 0:
             

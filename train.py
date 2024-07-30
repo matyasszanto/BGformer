@@ -14,6 +14,7 @@ def run(config=None, debug=False):
             "models": "NHITS",
             'train_dataset': 'ICU',
             'test_dataset': 'Ohio',
+            'normalize': True,
         }
 
     elif config['models'] == []:

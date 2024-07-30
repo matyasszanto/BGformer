@@ -10,12 +10,13 @@ config = {
         # datasets: ICU, Ohio
         'train_dataset': 'ICU',
         'test_dataset': 'Ohio',
+        'normalize': False,
         'TN_topk': 4,
     }
 if not debug:
     wandb.init(
         entity='szanto-matyas',
-        project='BGformer',
+        project='BGformer_normalized',
         config=config,
     )
 
