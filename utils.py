@@ -2,6 +2,74 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+import pathlib
+from sklearn.preprocessing import MinMaxScaler
+
+class dataloader():
+    def __init__(self, config, train):
+
+        self.config = config
+        self.dataframe = self.read_dataset(train=train)
+        self.min_bg = 0
+        self.max_bg = 0
+        self.normalize()
+        
+
+    def read_dataset(self, train):
+        # read data
+        train_key_selector = 'train_dataset' if train else 'test_dataset'
+        basepath = pathlib.Path(__file__).parent.resolve()
+
+        if self.config[train_key_selector] == 'Ohio':
+            # OhioT1DM data
+            csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
+        else:
+            # ICU data
+            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
+ 
+        Y_df = pd.read_csv(csv_path)
+        
+        if 'Unnamed: 0' in Y_df.columns:
+            Y_df.drop(columns=['Unnamed: 0'], inplace=True)
+
+        timestamps = Y_df['ds']
+        new_timestamps = timestamps.apply(to_datetime)
+        Y_df['ds'] = new_timestamps
+        if 'bg' in Y_df.columns:
+            Y_df.rename(columns={'bg': 'y'}, inplace=True)
+
+        uids = Y_df['unique_id'].unique()
+        Y_df = Y_df.query('unique_id in @uids').reset_index(drop=True)
+
+        return Y_df
+    
+
+    def normalize(self):
+        """
+        save maximum and minimum BG values for later rescaling, and
+        normalize BG values
+        """
+        self.min_bg = min(self.dataframe['y'])
+        self.max_bg = max(self.dataframe['y'])
+        scaler = MinMaxScaler()
+        self.dataframe['y'] = scaler.fit_transform(self.dataframe['y'].values.reshape(-1,1))
+
+
+    # Function to find all continuous snippets
+    def find_all_continuous_snippets(self, hours=24):
+        snippets = []
+        total_points = len(self.dataframe)
+        snippet_counter = 0
+        
+        for start_idx in range(total_points - hours + 1):
+            snippet = self.dataframe.iloc[start_idx:start_idx + hours].copy()
+            time_diffs = snippet['ds'].diff().iloc[1:]  # Skip the first NaT value
+            if all(time_diffs == pd.Timedelta(hours=1)):
+                snippet.loc[:, 'unique_id'] = f"{snippet['unique_id'].iloc[0]}_{snippet_counter}"
+                snippets.append(snippet)
+                snippet_counter += 1
+        
+        return pd.concat(snippets).reset_index(drop=True) if snippets else pd.DataFrame()
 
 
 def to_datetime(input_string):
@@ -61,20 +129,3 @@ def connect_gt_and_pred(df_gt, df_pred, horizon=3):
         cv_df_output.drop('index', axis=1, inplace=True)
 
     return cv_df_output
-
-
-# Function to find all continuous snippets
-def find_all_continuous_snippets(df, hours=24):
-    snippets = []
-    total_points = len(df)
-    snippet_counter = 0
-    
-    for start_idx in range(total_points - hours + 1):
-        snippet = df.iloc[start_idx:start_idx + hours].copy()
-        time_diffs = snippet['ds'].diff().iloc[1:]  # Skip the first NaT value
-        if all(time_diffs == pd.Timedelta(hours=1)):
-            snippet.loc[:, 'unique_id'] = f"{snippet['unique_id'].iloc[0]}_{snippet_counter}"
-            snippets.append(snippet)
-            snippet_counter += 1
-    
-    return pd.concat(snippets).reset_index(drop=True) if snippets else pd.DataFrame()

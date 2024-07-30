@@ -13,7 +13,7 @@ def experiment():
     wandb.init()
     
     nf = train.run(config=wandb.config)
-    plot_test, metrics = test.run(models=nf)
+    plot_test, metrics = test.run(config=wandb.config, models=nf)
 
     image_test = wandb.Image(plot_test, caption=f'test plots')
 
@@ -37,7 +37,14 @@ config = {
     'parameters': {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
         'models': {
-            'values': ['TimesNet', 'FEDformer'],
+            'values': ['TimesNet', 'FEDformer', 'Informer', 'Autoformer', 'iTransformer'],
+        },
+        # datasets: ICU, Ohio
+        'train_dataset': {
+            'values': ['ICU'],
+        },
+        'test_dataset': {
+            'values': ['Ohio'],
         },
         # 'TN_topk': {
         #     'values': [2, 3, 4, 5, 6]

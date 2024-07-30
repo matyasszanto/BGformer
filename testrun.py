@@ -2,11 +2,14 @@ import wandb
 import numpy as np
 import train, test
 
-debug = True
+debug = False
 
 config = {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
         'models': ["TimesNet", "NHITS"],
+        # datasets: ICU, Ohio
+        'train_dataset': 'ICU',
+        'test_dataset': 'Ohio',
         'TN_topk': 4,
     }
 if not debug:
@@ -17,7 +20,7 @@ if not debug:
     )
 
 nf = train.run(config=config)
-plot_test, metrics = test.run(models = nf)
+plot_test, metrics = test.run(config=config, models = nf)
 
 # image_train = wandb.Image(plot_train, caption=f'train plots')
 if not debug:
