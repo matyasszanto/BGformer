@@ -31,16 +31,16 @@ def run(config, models = None, debug = False, horizon = 3):
     ids_to_drop = [i for i in range(len(Y_df)) if i % 24 >= 24-horizon]
     ids_to_drop_for_comparison = [i for i in range(len(Y_df)) if i % 24 < 24-horizon]
 
-    Y_df_window = Y_df.drop(ids_to_drop)
-    Y_df_gt = Y_df.drop(ids_to_drop_for_comparison)
+    Y_df_gt_window = Y_df.drop(ids_to_drop)
+    Y_df_gt_horizon = Y_df.drop(ids_to_drop_for_comparison)
 
     # predict
-    Y_hat_df_2 = models.predict(df=Y_df_window).reset_index()
+    Y_hat_df_2 = models.predict(df=Y_df_gt_window).reset_index()
 
     if config['normalize']:
 
         # denormalize GT values
-        Y_df_gt['y'] = data.scaler.inverse_transform(Y_df_gt['y'].values.reshape(-1,1))
+        Y_df_gt_horizon['y'] = data.scaler.inverse_transform(Y_df_gt_horizon['y'].values.reshape(-1,1))
         Y_df['y'] = data.scaler.inverse_transform(Y_df['y'].values.reshape(-1,1))
         
         # denormalize predicted values
@@ -52,9 +52,9 @@ def run(config, models = None, debug = False, horizon = 3):
     metrics = pd.DataFrame(columns=metrics_cols)
     for model in models.models:
         model_metrics = {metrics_cols[0]: str(model)}
-        model_metrics['MAE'] = mae(Y_hat_df_2[str(model)], Y_df_gt['y'])
-        model_metrics['MSE'] = mse(Y_hat_df_2[str(model)], Y_df_gt['y'])
-        model_metrics['RMSE'] = rmse(Y_hat_df_2[str(model)], Y_df_gt['y'])
+        model_metrics['MAE'] = mae(Y_hat_df_2[str(model)], Y_df_gt_horizon['y'])
+        model_metrics['MSE'] = mse(Y_hat_df_2[str(model)], Y_df_gt_horizon['y'])
+        model_metrics['RMSE'] = rmse(Y_hat_df_2[str(model)], Y_df_gt_horizon['y'])
 
         model_metrics_df = pd.DataFrame(model_metrics, index=[0])
         metrics = pd.concat([metrics, model_metrics_df], ignore_index=True)
@@ -81,7 +81,7 @@ def run(config, models = None, debug = False, horizon = 3):
 
     
     if not debug:
-        return plot, metrics
+        return prediction_graphs, metrics, histograms
     else:
         return 0
 
