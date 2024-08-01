@@ -12,8 +12,8 @@ def experiment():
     
     wandb.init()
     
-    nf = train.run(config=config)
-    prediction_plots, metrics, prediction_hists = test.run(config=config, models = nf)
+    nf = train.run(config=wandb.config)
+    prediction_plots, metrics, prediction_hists = test.run(config=wandb.config, models = nf)
 
     image_test = wandb.Image(prediction_plots, caption='Test plots')
     image_hist = wandb.Image(prediction_hists, caption='Error distributions')
