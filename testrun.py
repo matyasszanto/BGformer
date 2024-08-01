@@ -21,17 +21,19 @@ if not debug:
     )
 
 nf = train.run(config=config)
-plot_test, metrics = test.run(config=config, models = nf)
+prediction_plots, metrics, prediction_hists = test.run(config=config, models = nf)
 
 # image_train = wandb.Image(plot_train, caption=f'train plots')
 if not debug:
-    image_test = wandb.Image(plot_test, caption=f'test plots')
+    image_test = wandb.Image(prediction_plots, caption='Test plots')
+    image_hist = wandb.Image(prediction_hists, caption='Error distributions')
 
     wandb.log(
         {
         #  'training plots': image_train,
         'test plots': image_test,
         'metrics': metrics,
+        'Error distributions': image_hist
         }
     )
 

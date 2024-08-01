@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import pathlib
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 
 class dataloader():
     def __init__(self, config, train):
@@ -131,3 +132,51 @@ def connect_gt_and_pred(df_gt, df_pred, horizon=3):
         cv_df_output.drop('index', axis=1, inplace=True)
 
     return cv_df_output
+
+def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
+    '''
+    Function to calculate the distribution of error on the predicted horizon
+    '''
+    
+    # get prediction model names
+    model_strings = [str(model) for model in models.models]
+
+    # initialize errors table and calculate errors for every model
+    errors_array = np.empty(shape=(len(model_strings), horizon, int(len(df_gt)/horizon)))
+
+    for i, [gt_row, pred_row] in enumerate(zip(df_gt.iterrows(), df_pred.iterrows())):
+        gt_val = gt_row[1]['y']
+        for j, model_string in enumerate(model_strings):
+            error_val = pred_row[1][model_string] - gt_val
+            errors_array[j, int(i%horizon), int(i//horizon)] = error_val
+
+    # calculate statistics
+    means, stds = np.mean(errors_array, axis=2), np.std(errors_array, axis=2)
+
+    # plot histograms
+    fig, axes = plt.subplots(nrows=len(model_strings), ncols=horizon, figsize=(horizon*5, len(model_strings)*5))
+    for i, ax in enumerate(axes.flat):
+        model_indexer = i//horizon
+        hist_arr = ax.hist(errors_array[model_indexer, i, :], bins=200)
+        plt.text(0, 1, f'Mean: {means[model_indexer, i]:.4f}\nSTD: {stds[model_indexer,i]:.4f}', ha='left', va='top', transform=ax.transAxes, bbox=dict(fill=True, facecolor='orange', edgecolor='black', linewidth=2))
+        ax.set_ylim(0, max(hist_arr[0]) + 20)
+
+    # mark rows and columns with models and time delays
+    if len(model_strings)>1:
+        for ax, col in zip(axes[0], ['t+1', 't+2', 't+3']):
+            ax.set_title(col)
+
+        for ax, model_string in zip(axes[:, 0], model_strings):
+            ax.annotate(model_string, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
+                    xycoords=ax.yaxis.label, textcoords='offset points',
+                    size='large', ha='right', va='center')
+    
+    else:
+        for ax, col in zip(axes, ['t+1', 't+2', 't+3']):
+            ax.set_title(col)
+
+        axes[0].annotate(model_string, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
+            xycoords=ax.yaxis.label, textcoords='offset points',
+            size='large', ha='right', va='center')
+    
+    return fig, means, stds

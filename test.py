@@ -5,7 +5,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import pathlib
 
-from utils import dataloader, connect_gt_and_pred
+from utils import dataloader, connect_gt_and_pred, calculate_error_distributions
 
 from statsforecast import StatsForecast
 from neuralforecast import NeuralForecast
@@ -63,7 +63,11 @@ def run(config, models = None, debug = False, horizon = 3):
     # plot
     if not debug:
         df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, horizon=horizon)
-        plot = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff']), max_insample_length=1260)
+        prediction_graphs = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff']), max_insample_length=1260)
+        histograms, _, _ = calculate_error_distributions(Y_df_gt_horizon, Y_hat_df_2, models=models)
+
+
+    print()
 
     print('\n\n\n')
     print('Errors:')

@@ -12,16 +12,17 @@ def experiment():
     
     wandb.init()
     
-    nf = train.run(config=wandb.config)
-    plot_test, metrics = test.run(config=wandb.config, models=nf)
+    nf = train.run(config=config)
+    prediction_plots, metrics, prediction_hists = test.run(config=config, models = nf)
 
-    image_test = wandb.Image(plot_test, caption=f'test plots')
+    image_test = wandb.Image(prediction_plots, caption='Test plots')
+    image_hist = wandb.Image(prediction_hists, caption='Error distributions')
 
     wandb.log(
         {
         'test plots': image_test,
         'metrics': metrics,
-        'best RMSE': min(metrics['RMSE'])
+        'Error distributions': image_hist
         }
     )
 
