@@ -22,12 +22,12 @@ def find_all_continuous_snippets(dataset, hours=24):
 
 def icu_train_test_split(df, seed:int):
     np.random.seed(seed)
-    ids = df['unique_id'].unique()
+    ids = df['idx'].unique()
     test_idx = np.random.rand(len(ids)) > 0.8
     test_ids = ids[test_idx]
     train_ids = ids[~test_idx]
-    df_test = df[df['unique_id'].isin(test_ids)]
-    df_train = df[df['unique_id'].isin(train_ids)]
+    df_test = df[df['idx'].isin(test_ids)]
+    df_train = df[df['idx'].isin(train_ids)]
 
     df_train_random_snippets = find_all_continuous_snippets(df_train)
     df_test_random_snippets = find_all_continuous_snippets(df_test)
@@ -49,7 +49,8 @@ total_data_lens = []
 for i in trange(0, 50):
     _, _, total = icu_train_test_split(dataframe, i)
     total_data_lens.append(total)
+    print(total_data_lens)
 
 plt.plot(total_data_lens)
 plt.savefig('out.png')
-print(total_data_lens)
+print(dict(zip(range(len(total_data_lens)), total_data_lens)))
