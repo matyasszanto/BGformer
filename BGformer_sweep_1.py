@@ -38,28 +38,34 @@ config = {
     'parameters': {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
         'models': {
-            'values': ['TimesNet'],
+            'values': ['TimesNet', 'FEDformer', 'Informer', 'Autoformer', 'iTransformer'],
             # 'values': ['TimesNet', 'FEDformer', 'Informer', 'Autoformer', 'iTransformer'],
         },
-        # datasets: ICU, Ohio
+        # datasets: ICU, Ohio, ICU_test, ICU_train, ICU+Ohio
         'train_dataset': {
-            'values': ['ICU'],
+            'values': ['ICU_train', 'ICU+Ohio'],
         },
         'test_dataset': {
-            'values': ['Ohio'],
+            'values': ['ICU_test'],
         },
         'normalize': {
             'values': [True]
+        },
+        'TN_topk': {
+            'values': [2]
+        },
+        'val_check_steps': {
+            'values': [1000]
+        },
+        'max_steps': {
+            'values': [100000]
         }
-        # 'TN_topk': {
-        #     'values': [2, 3, 4, 5, 6]
-        # }
     }
 }
 
 
 # set up sweep and run it
-sweep_id = wandb.sweep(sweep=config, project='BGformer_normalized')
+sweep_id = wandb.sweep(sweep=config, project='BGformer_normalized_new')
 wandb.agent(sweep_id=sweep_id, function=experiment)
 
 

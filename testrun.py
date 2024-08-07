@@ -1,17 +1,18 @@
 import wandb
-import numpy as np
 import train, test
 
-debug = False
+debug = True
 
 config = {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
-        'models': ["TimesNet", "NHITS"],
+        'models': ["TimesNet"],
         # datasets: ICU, Ohio
-        'train_dataset': 'ICU',
-        'test_dataset': 'Ohio',
+        'train_dataset': 'ICU+Ohio',
+        'test_dataset': 'ICU_test',
         'normalize': False,
         'TN_topk': 4,
+        'max_steps': 1,
+        'val_check_steps': 1000
     }
 if not debug:
     wandb.init(
@@ -23,7 +24,6 @@ if not debug:
 nf = train.run(config=config)
 prediction_plots, metrics, prediction_hists = test.run(config=config, models = nf)
 
-# image_train = wandb.Image(plot_train, caption=f'train plots')
 if not debug:
     image_test = wandb.Image(prediction_plots, caption='Test plots')
     image_hist = wandb.Image(prediction_hists, caption='Error distributions')
@@ -38,3 +38,6 @@ if not debug:
     )
 
     wandb.finish()
+
+else:
+    prediction_hists.savefig(fname=f'testrun_out.png')

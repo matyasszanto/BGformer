@@ -25,9 +25,21 @@ class dataloader():
         if self.config[train_key_selector] == 'Ohio':
             # OhioT1DM data
             csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
-        else:
+        elif self.config[train_key_selector] == 'ICU':
             # ICU data
             csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
+        elif self.config[train_key_selector] == 'ICU_train':
+            # ICU 80% split data
+            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_train.csv')
+        elif self.config[train_key_selector] == 'ICU_test':
+            # ICU 20% split data
+            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_test.csv')
+        elif self.config[train_key_selector] == 'ICU+Ohio':
+            # ICU 80% split data + Ohio data NORMALIZED!
+            csv_path = pathlib.Path.joinpath(basepath, 'data/hourly_combo_train.csv')
+        else:
+            print('Bad dataset selector option! Defaulting to Ohio dataset')
+            csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
  
         Y_df = pd.read_csv(csv_path)
         
@@ -147,7 +159,7 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
     for i, [gt_row, pred_row] in enumerate(zip(df_gt.iterrows(), df_pred.iterrows())):
         gt_val = gt_row[1]['y']
         for j, model_string in enumerate(model_strings):
-            error_val = pred_row[1][model_string] - gt_val
+            error_val = (pred_row[1][model_string] - gt_val) / gt_val
             errors_array[j, int(i%horizon), int(i//horizon)] = error_val
 
     # calculate statistics
@@ -155,11 +167,16 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
 
     # plot histograms
     fig, axes = plt.subplots(nrows=len(model_strings), ncols=horizon, figsize=(horizon*5, len(model_strings)*5))
+    max_ylim = 0
     for i, ax in enumerate(axes.flat):
         model_indexer = i//horizon
-        hist_arr = ax.hist(errors_array[model_indexer, i, :], bins=200)
-        plt.text(0, 1, f'Mean: {means[model_indexer, i]:.4f}\nSTD: {stds[model_indexer,i]:.4f}', ha='left', va='top', transform=ax.transAxes, bbox=dict(fill=True, facecolor='orange', edgecolor='black', linewidth=2))
-        ax.set_ylim(0, max(hist_arr[0]) + 20)
+        delta_t_indexer = i%horizon
+        hist_arr = ax.hist(errors_array[model_indexer, delta_t_indexer, :], bins=200)
+        plt.text(0, 1, f'Mean: {means[model_indexer, delta_t_indexer]:.4f}\nSTD: {stds[model_indexer, delta_t_indexer]:.4f}', ha='left', va='top', transform=ax.transAxes, bbox=dict(fill=True, facecolor='orange', edgecolor='black', linewidth=2))
+        max_ylim = max_ylim if max(hist_arr[0])<max_ylim else max(hist_arr[0])
+        
+    for ax in axes.flat:
+        ax.set_ylim(0, max_ylim + 0.15 * max_ylim)
 
     # mark rows and columns with models and time delays
     if len(model_strings)>1:
@@ -175,8 +192,8 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
         for ax, col in zip(axes, ['t+1', 't+2', 't+3']):
             ax.set_title(col)
 
-        axes[0].annotate(model_string, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
-            xycoords=ax.yaxis.label, textcoords='offset points',
-            size='large', ha='right', va='center')
+        axes[0].annotate(model_strings[0], xy=(0, 0.5), xytext=(-axes[0].yaxis.labelpad - 5, 0), 
+                         xycoords=axes[0].yaxis.label, textcoords='offset points',
+                         size='large', ha='right', va='center')
     
     return fig, means, stds
