@@ -90,7 +90,7 @@ def to_datetime(input_string):
     return dt.datetime.strptime(input_string, "%Y-%m-%d %H:%M:%S").replace(minute=0, second=0)
 
 
-def connect_gt_and_pred(df_gt, df_pred, horizon=3):
+def connect_gt_and_pred(df_gt, df_pred, snippet_length=24, horizon=3):
 
     # debug
     print('Started merging function')
@@ -113,7 +113,7 @@ def connect_gt_and_pred(df_gt, df_pred, horizon=3):
 
     cv_df_output = pd.DataFrame()
     added_rows = 0
-    gt_uids = Y_df_2['unique_id'][::24].to_numpy()
+    gt_uids = Y_df_2['unique_id'][::snippet_length].to_numpy()
 
     for i in tqdm(range(len(pred_df_2))):
         if i % horizon == 0:
@@ -125,9 +125,10 @@ def connect_gt_and_pred(df_gt, df_pred, horizon=3):
             
             # find current ground truth slice to merge
             pred_uid = pred_df_2.at[i, 'unique_id']
-            current_gt_slice_index = np.where(gt_uids==pred_uid)[0].item()
+            current_gt_slice_index_array = np.where(gt_uids==pred_uid)[0]
+            current_gt_slice_index = current_gt_slice_index_array.item()
             
-            bg_gt = Y_df_2.loc[(current_gt_slice_index+1)*24-horizon-1]['y']
+            bg_gt = Y_df_2.loc[(current_gt_slice_index+1)*snippet_length-horizon-1]['y']
 
             for col in cv_df_output.columns:
                 if col not in ['unique_id', 'ds', 'cutoff']:
@@ -179,8 +180,9 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
         ax.set_ylim(0, max_ylim + 0.15 * max_ylim)
 
     # mark rows and columns with models and time delays
+    column_titles = [f't+{i+1}' for i in range(horizon)]
     if len(model_strings)>1:
-        for ax, col in zip(axes[0], ['t+1', 't+2', 't+3']):
+        for ax, col in zip(axes[0], column_titles):
             ax.set_title(col)
 
         for ax, model_string in zip(axes[:, 0], model_strings):
@@ -189,7 +191,7 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
                     size='large', ha='right', va='center')
     
     else:
-        for ax, col in zip(axes, ['t+1', 't+2', 't+3']):
+        for ax, col in zip(axes, column_titles):
             ax.set_title(col)
 
         axes[0].annotate(model_strings[0], xy=(0, 0.5), xytext=(-axes[0].yaxis.labelpad - 5, 0), 

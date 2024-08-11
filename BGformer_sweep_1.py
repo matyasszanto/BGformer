@@ -57,10 +57,16 @@ config = {
             'values': [2]
         },
         'val_check_steps': {
-            'values': [1000]
+            'values': [5000]
         },
         'max_steps': {
-            'values': [100000]
+            'values': [200000]
+        },
+        'horizon': {
+            'values': [6]
+        },
+        'snippet_length': {
+            'values': [27]
         }
     }
 }

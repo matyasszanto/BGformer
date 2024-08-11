@@ -12,7 +12,7 @@ from neuralforecast import NeuralForecast
 from neuralforecast.losses.numpy import mae, mse, rmse
 
 
-def run(config, models = None, debug = False, horizon = 3):
+def run(config, models = None, debug = False):
     
     if debug:
         # load pretrained model
@@ -23,13 +23,15 @@ def run(config, models = None, debug = False, horizon = 3):
         plot = plt.imshow(np.zeros((200, 200)))
         return plot
 
+    horizon = config['horizon']
+    snippet_length = config['snippet_length']
 
     data = dataloader(config=config, train=False)
-    Y_df = data.find_all_continuous_snippets()
+    Y_df = data.find_all_continuous_snippets(hours=snippet_length)
 
     # drop last horizon length y values for prediction
-    ids_to_drop = [i for i in range(len(Y_df)) if i % 24 >= 24-horizon]
-    ids_to_drop_for_comparison = [i for i in range(len(Y_df)) if i % 24 < 24-horizon]
+    ids_to_drop = [i for i in range(len(Y_df)) if i % snippet_length >= snippet_length-horizon]
+    ids_to_drop_for_comparison = [i for i in range(len(Y_df)) if i % snippet_length < snippet_length-horizon]
 
     Y_df_gt_window = Y_df.drop(ids_to_drop)
     Y_df_gt_horizon = Y_df.drop(ids_to_drop_for_comparison)
@@ -62,7 +64,7 @@ def run(config, models = None, debug = False, horizon = 3):
 
     # plot
     if not debug:
-        df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, horizon=horizon)
+        df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, snippet_length=snippet_length, horizon=horizon)
         prediction_graphs = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff']), max_insample_length=1260)
         histograms, means_stds_df = calculate_error_distributions(Y_df_gt_horizon, Y_hat_df_2, models=models, horizon=horizon)
 

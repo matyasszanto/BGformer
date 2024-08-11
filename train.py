@@ -16,7 +16,9 @@ def run(config=None, debug=False):
             'test_dataset': 'Ohio',
             'normalize': True,
             'max_steps': 1000,
-            'val_check_steps': 1000
+            'val_check_steps': 1000,
+            'horizon': 3,
+            'snippet_length': 24
         }
 
     elif config['models'] == []:
@@ -27,10 +29,13 @@ def run(config=None, debug=False):
         config['TN_topk'] = 3
 
     data = dataloader(config=config, train=True)
-    Y_df = data.find_all_continuous_snippets()
+    Y_df = data.find_all_continuous_snippets(hours=config['snippet_length'])
+    
+    horizon_hours = config['horizon'] # length of horizon in hours
     
     freq = 'h' # h or min
-    horizon = 3 if freq=='h' else 90
+    horizon = horizon_hours if freq=='h' else 90
+    
     model_strings_array = [config['models']] if isinstance(config['models'], str) else config['models']
     models_array = []
     max_steps = config['max_steps']

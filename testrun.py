@@ -1,18 +1,20 @@
 import wandb
 import train, test
 
-debug = True
+debug = False
 
 config = {
         # model types: NHITS, TimesNet, FEDformer, Informer, Autoformer, iTransformer
         'models': ["TimesNet"],
         # datasets: ICU, Ohio
-        'train_dataset': 'ICU+Ohio',
+        'train_dataset': 'ICU_train',
         'test_dataset': 'ICU_test',
         'normalize': False,
         'TN_topk': 4,
         'max_steps': 1,
-        'val_check_steps': 1000
+        'val_check_steps': 1000,
+        'horizon': 6,
+        'snippet_length': 27,
     }
 if not debug:
     wandb.init(
@@ -22,7 +24,7 @@ if not debug:
     )
 
 nf = train.run(config=config)
-prediction_plots, metrics, prediction_hists = test.run(config=config, models = nf)
+prediction_plots, metrics, prediction_hists, means_stds_df = test.run(config=config, models = nf)
 
 if not debug:
     image_test = wandb.Image(prediction_plots, caption='Test plots')
