@@ -195,5 +195,16 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
         axes[0].annotate(model_strings[0], xy=(0, 0.5), xytext=(-axes[0].yaxis.labelpad - 5, 0), 
                          xycoords=axes[0].yaxis.label, textcoords='offset points',
                          size='large', ha='right', va='center')
+
+    means_stds_array = np.empty(shape=(2*len(model_strings), horizon), dtype=means.dtype)
+    means_stds_array[0::2] = means
+    means_stds_array[1::2] = stds
     
-    return fig, means, stds
+    means_stds_df_indexer = pd.MultiIndex.from_product([model_strings, ['Mean', 'Std']], names=['Model name', 'Statistic'])
+    
+    means_stds_df = pd.DataFrame(means_stds_array, index=means_stds_df_indexer, columns=column_titles)
+    means_stds_df.reset_index(inplace=True)
+
+    print(means_stds_df)
+
+    return fig, means_stds_df

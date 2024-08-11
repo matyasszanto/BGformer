@@ -64,7 +64,7 @@ def run(config, models = None, debug = False, horizon = 3):
     if not debug:
         df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, horizon=horizon)
         prediction_graphs = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff']), max_insample_length=1260)
-        histograms, _, _ = calculate_error_distributions(Y_df_gt_horizon, Y_hat_df_2, models=models)
+        histograms, means_stds_df = calculate_error_distributions(Y_df_gt_horizon, Y_hat_df_2, models=models, horizon=horizon)
 
 
     print()
@@ -81,7 +81,7 @@ def run(config, models = None, debug = False, horizon = 3):
 
     
     if not debug:
-        return prediction_graphs, metrics, histograms
+        return prediction_graphs, metrics, histograms, means_stds_df
     else:
         return 0
 

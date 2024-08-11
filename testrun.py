@@ -31,9 +31,11 @@ if not debug:
     wandb.log(
         {
         #  'training plots': image_train,
-        'test plots': image_test,
-        'metrics': metrics,
-        'Error distributions': image_hist
+        'Test plots': image_test,
+        'Metrics': metrics,
+        'Best RMSE': min(metrics['RMSE']),
+        'Error distributions': image_hist,
+        'Relative error means & stds': means_stds_df
         }
     )
 
