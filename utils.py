@@ -207,6 +207,7 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
     means_stds_df = pd.DataFrame(means_stds_array, index=means_stds_df_indexer, columns=column_titles)
     means_stds_df.reset_index(inplace=True)
 
+    print('\n\n\n')
     print(means_stds_df)
 
     return fig, means_stds_df
