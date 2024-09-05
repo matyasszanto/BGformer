@@ -189,3 +189,5 @@ TimeSeriesLibrary/*
 wandb/
 
 scratch/
+
+preliminary/*.csv
