@@ -11,10 +11,11 @@ config = {
         'test_dataset': 'ICU_test',
         'normalize': False,
         'TN_topk': 4,
-        'max_steps': 1,
-        'val_check_steps': 1000,
+        'max_steps': 1000,
+        'val_check_steps': 500,
         'horizon': 6,
         'snippet_length': 27,
+        'enable_checkpointing': True,
     }
 if not debug:
     wandb.init(
