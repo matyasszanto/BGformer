@@ -7,9 +7,10 @@ from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 
 class dataloader():
-    def __init__(self, config, train):
+    def __init__(self, config, train, basepath=""):
 
         self.config = config
+        self.basepath = basepath if basepath!="" else pathlib.Path(__file__).parent.resolve()
         self.dataframe = self.read_dataset(train=train)
         self.min_bg = 0
         self.max_bg = 0
@@ -20,26 +21,28 @@ class dataloader():
     def read_dataset(self, train):
         # read data
         train_key_selector = 'train_dataset' if train else 'test_dataset'
-        basepath = pathlib.Path(__file__).parent.resolve()
 
         if self.config[train_key_selector] == 'Ohio':
-            # OhioT1DM data
-            csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
+            # OhioT1DM hourly train data
+            csv_path = pathlib.Path.joinpath(self.basepath, "data/OhioT1DM/full_dataset_hourly.csv")
         elif self.config[train_key_selector] == 'ICU':
             # ICU data
-            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_for_nf.csv')
         elif self.config[train_key_selector] == 'ICU_train':
             # ICU 80% split data
-            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_train.csv')
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_train.csv')
         elif self.config[train_key_selector] == 'ICU_test':
             # ICU 20% split data
-            csv_path = pathlib.Path.joinpath(basepath, 'data/ICU_data/hourly_ICU_test.csv')
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_test.csv')
         elif self.config[train_key_selector] == 'ICU+Ohio':
             # ICU 80% split data + Ohio data NORMALIZED!
-            csv_path = pathlib.Path.joinpath(basepath, 'data/hourly_combo_train.csv')
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/hourly_combo_train.csv')
+        elif self.config[train_key_selector] == 'Ohio_test':
+            # OhioT1DM hourly test data
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/OhioT1DM/full_dataset_hourly_test.csv')
         else:
             print('Bad dataset selector option! Defaulting to Ohio dataset')
-            csv_path = pathlib.Path.joinpath(basepath, "data/OhioT1DM/full_dataset_hourly.csv")
+            csv_path = pathlib.Path.joinpath(self.basepath, "data/OhioT1DM/full_dataset_hourly.csv")
  
         Y_df = pd.read_csv(csv_path)
         
@@ -152,7 +155,10 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
     '''
     
     # get prediction model names
-    model_strings = [str(model) for model in models.models]
+    if type(models) == str:
+        model_strings = [models]
+    else:
+        model_strings = [str(model) for model in models.models]
 
     # initialize errors table and calculate errors for every model
     errors_array = np.empty(shape=(len(model_strings), horizon, int(len(df_gt)/horizon)))
