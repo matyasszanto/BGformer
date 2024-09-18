@@ -191,3 +191,5 @@ wandb/
 scratch/
 
 preliminary/*.csv
+
+TimeGPT/api_key
