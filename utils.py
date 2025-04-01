@@ -12,8 +12,8 @@ class dataloader():
         self.config = config
         self.basepath = basepath if basepath!="" else pathlib.Path(__file__).parent.resolve()
         self.dataframe = self.read_dataset(train=train)
-        self.min_bg = 0
-        self.max_bg = 0
+        self.min_si = 0
+        self.max_si = 0
         if config['normalize']:
             self.normalize()
         
@@ -52,8 +52,8 @@ class dataloader():
         timestamps = Y_df['ds']
         new_timestamps = timestamps.apply(to_datetime)
         Y_df['ds'] = new_timestamps
-        if 'bg' in Y_df.columns:
-            Y_df.rename(columns={'bg': 'y'}, inplace=True)
+        if 'SI' in Y_df.columns:
+            Y_df.rename(columns={'SI': 'y'}, inplace=True)
 
         uids = Y_df['unique_id'].unique()
         Y_df = Y_df.query('unique_id in @uids').reset_index(drop=True)
@@ -63,11 +63,11 @@ class dataloader():
 
     def normalize(self):
         """
-        save maximum and minimum BG values for later rescaling, and
-        normalize BG values
+        save maximum and minimum SI values for later rescaling, and
+        normalize SI values
         """
-        self.min_bg = min(self.dataframe['y'])
-        self.max_bg = max(self.dataframe['y'])
+        self.min_si = min(self.dataframe['y'])
+        self.max_si = max(self.dataframe['y'])
         self.scaler = MinMaxScaler()
         self.dataframe['y'] = self.scaler.fit_transform(self.dataframe['y'].values.reshape(-1,1))
 
@@ -131,11 +131,11 @@ def connect_gt_and_pred(df_gt, df_pred, snippet_length=24, horizon=3):
             current_gt_slice_index_array = np.where(gt_uids==pred_uid)[0]
             current_gt_slice_index = current_gt_slice_index_array.item()
             
-            bg_gt = Y_df_2.loc[(current_gt_slice_index+1)*snippet_length-horizon-1]['y']
+            si_gt = Y_df_2.loc[(current_gt_slice_index+1)*snippet_length-horizon-1]['y']
 
             for col in cv_df_output.columns:
                 if col not in ['unique_id', 'ds', 'cutoff']:
-                    cv_df_output.at[i + added_rows, col] = bg_gt
+                    cv_df_output.at[i + added_rows, col] = si_gt
 
             added_rows += 1
 
@@ -166,6 +166,7 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
     for i, [gt_row, pred_row] in enumerate(zip(df_gt.iterrows(), df_pred.iterrows())):
         gt_val = gt_row[1]['y']
         for j, model_string in enumerate(model_strings):
+            gt_val = 1e-7 if gt_val == 0.0 else gt_val
             error_val = (pred_row[1][model_string] - gt_val) / gt_val
             errors_array[j, int(i%horizon), int(i//horizon)] = error_val
 
