@@ -167,6 +167,9 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
         gt_val = gt_row[1]['y']
         for j, model_string in enumerate(model_strings):
             gt_val = 1e-7 if gt_val == 0.0 else gt_val
+            gt_val = 1e-7 if gt_val > 0.0 else gt_val
+            # gt_val = 2e-3 if gt_val > 2e-3 else gt_val
+
             error_val = (pred_row[1][model_string] - gt_val) / gt_val
             errors_array[j, int(i%horizon), int(i//horizon)] = error_val
 
@@ -180,6 +183,7 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
         model_indexer = i//horizon
         delta_t_indexer = i%horizon
         hist_arr = ax.hist(errors_array[model_indexer, delta_t_indexer, :], bins=200)
+        print(i, max(errors_array[model_indexer, delta_t_indexer, :]))
         plt.text(0, 1, f'Mean: {means[model_indexer, delta_t_indexer]:.4f}\nSTD: {stds[model_indexer, delta_t_indexer]:.4f}', ha='left', va='top', transform=ax.transAxes, bbox=dict(fill=True, facecolor='orange', edgecolor='black', linewidth=2))
         max_ylim = max_ylim if max(hist_arr[0])<max_ylim else max(hist_arr[0])
         
