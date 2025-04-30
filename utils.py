@@ -170,7 +170,9 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
             gt_val = 1e-7 if gt_val > 0.0 else gt_val
             # gt_val = 2e-3 if gt_val > 2e-3 else gt_val
 
-            error_val = (pred_row[1][model_string] - gt_val) / gt_val
+
+            # error_val = (pred_row[1][model_string] - gt_val) / gt_val
+            error_val = (pred_row[1][model_string] - gt_val)
             errors_array[j, int(i%horizon), int(i//horizon)] = error_val
 
     # calculate statistics
