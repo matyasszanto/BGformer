@@ -25,7 +25,6 @@ def run(config, models = None, debug = False):
 
     horizon = config['horizon']
     snippet_length = config['snippet_length']
-    model_names = [str(model) for model in models.models]
 
     data = dataloader(config=config, train=False)
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
