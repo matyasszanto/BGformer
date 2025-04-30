@@ -25,6 +25,7 @@ def run(config, models = None, debug = False):
 
     horizon = config['horizon']
     snippet_length = config['snippet_length']
+    model_names = [str(model) for model in models.models]
 
     data = dataloader(config=config, train=False)
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
@@ -38,6 +39,10 @@ def run(config, models = None, debug = False):
 
     # predict
     Y_hat_df_2 = models.predict(df=Y_df_gt_window).reset_index()
+
+    # introduce lower bound (0)
+    for model in models.models:
+        Y_hat_df_2[str(model)] = Y_hat_df_2[str(model)].clip(lower=0.0)
 
     if config['normalize']:
 
@@ -95,5 +100,7 @@ if __name__ == "__main__":
         'train_dataset': 'ICU',
         'test_dataset': 'Ohio',
         'normalize': True,
+        'horizon': 3,
+        'snippet_length': 21,
     }
     run(config=debug_config, debug=True)
