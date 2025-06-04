@@ -7,18 +7,18 @@ from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 
 class dataloader():
-    def __init__(self, config, train, basepath=""):
+    def __init__(self, config, train, valid=False, basepath=""):
 
         self.config = config
         self.basepath = basepath if basepath!="" else pathlib.Path(__file__).parent.resolve()
-        self.dataframe = self.read_dataset(train=train)
+        self.dataframe = self.read_dataset(train=train, valid=valid)
         self.min_si = 0
         self.max_si = 0
         if config['normalize']:
             self.normalize()
         
 
-    def read_dataset(self, train):
+    def read_dataset(self, train, valid):
         # read data
         train_key_selector = 'train_dataset' if train else 'test_dataset'
 
@@ -34,6 +34,12 @@ class dataloader():
         elif self.config[train_key_selector] == 'ICU_test':
             # ICU 20% split data
             csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_test.csv')
+        elif valid:
+            # ICU 10% split data
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_valid_10.csv')
+        elif self.config[train_key_selector] == 'ICU_test_10':
+            # ICU 10% split data
+            csv_path = pathlib.Path.joinpath(self.basepath, 'data/ICU_data/hourly_ICU_test_10.csv')
         elif self.config[train_key_selector] == 'ICU+Ohio':
             # ICU 80% split data + Ohio data NORMALIZED!
             csv_path = pathlib.Path.joinpath(self.basepath, 'data/hourly_combo_train.csv')
