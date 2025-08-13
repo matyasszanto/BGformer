@@ -27,7 +27,7 @@ def run(config, models = None, debug = False):
     snippet_length = config['snippet_length']
     input_window_length = snippet_length - horizon
 
-    data = dataloader(config=config, train=False)
+    data = dataloader(config=config, train=False, valid=config['valid'])
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
 
     # drop last horizon length y values for prediction
@@ -45,7 +45,7 @@ def run(config, models = None, debug = False):
         Y_df_gt_window_chunked = Y_df_gt_window
 
     # predict
-    Y_hat_df_2 = models.predict(df=Y_df_gt_window).reset_index()
+    Y_hat_df_2 = models.predict(df=Y_df_gt_window_chunked).reset_index()
 
     # introduce lower bound (0)
     for model in models.models:
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         'test_dataset': 'Ohio',
         'normalize': True,
         'horizon': 3,
-        'snippet_length': 21,
+        'snippet_length': 24,
+        'valid': False,
     }
     run(config=debug_config, debug=True)
