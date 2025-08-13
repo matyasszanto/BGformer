@@ -25,6 +25,7 @@ def run(config, models = None, debug = False):
 
     horizon = config['horizon']
     snippet_length = config['snippet_length']
+    input_window_length = snippet_length - horizon
 
     data = dataloader(config=config, train=False)
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
@@ -35,6 +36,13 @@ def run(config, models = None, debug = False):
 
     Y_df_gt_window = Y_df.drop(ids_to_drop)
     Y_df_gt_horizon = Y_df.drop(ids_to_drop_for_comparison)
+
+    chunk_size = 32 * input_window_length  # Process 32 complete windows at a time
+    if len(Y_df_gt_window) % chunk_size != 0:
+        final_length = (len(Y_df_gt_window) // chunk_size) * chunk_size
+        Y_df_gt_window_chunked = Y_df_gt_window.iloc[:final_length].reset_index(drop=True)
+    else:
+        Y_df_gt_window_chunked = Y_df_gt_window
 
     # predict
     Y_hat_df_2 = models.predict(df=Y_df_gt_window).reset_index()
