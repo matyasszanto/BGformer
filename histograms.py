@@ -130,7 +130,7 @@ X, Y = np.meshgrid(y_cutoff_bin_centers, prediction_bin_centers, indexing='ij')
 
 #%% Plot surface and lines
 fig = plt.figure(figsize=(12, 9))
-fig.canvas.manager.set_window_title(f't+{t} distribution')
+fig.canvas.manager.set_window_title(f'{model_name}, p(SI(t+{t})|t)')
 ax = fig.add_subplot(111, projection='3d')
 
 # Surface with transparency
