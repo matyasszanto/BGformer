@@ -16,7 +16,7 @@ def run(config, models = None, debug = False):
     
     if debug:
         # load pretrained model
-        models = NeuralForecast.load(path='models/ohio_train_0')
+        models = NeuralForecast.load(path='models/2025_09_21_08_23_TimesNet_3_3_400000')
     
     elif models == None:
         print('No models were supplied, exiting!')
@@ -27,7 +27,7 @@ def run(config, models = None, debug = False):
     snippet_length = config['snippet_length']
     input_window_length = snippet_length - horizon
 
-    data = dataloader(config=config, train=False, valid=config['valid'])
+    data = dataloader(config=config, train=False, valid=False)
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
 
     # drop last horizon length y values for prediction
@@ -75,10 +75,14 @@ def run(config, models = None, debug = False):
 
 
     # plot
+    df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, snippet_length=snippet_length, horizon=horizon)
+    prediction_graphs = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff', 'level_0']), max_insample_length=1260)
+    
     if not debug:
-        df_to_plot_2 = connect_gt_and_pred(df_gt=Y_df, df_pred=Y_hat_df_2, snippet_length=snippet_length, horizon=horizon)
-        prediction_graphs = StatsForecast.plot(Y_df, df_to_plot_2.drop(columns=['y', 'cutoff']), max_insample_length=1260)
         histograms, means_stds_df = calculate_error_distributions(Y_df_gt_horizon, Y_hat_df_2, models=models, horizon=horizon)
+
+    if debug:
+        prediction_graphs.savefig(fname=f'test_{models.models[0]}_out.png')
 
 
     print()
@@ -100,15 +104,16 @@ def run(config, models = None, debug = False):
         return 0
 
 
+
 if __name__ == "__main__":
 
     debug_config = {
         "models": "NHITS",
-        'train_dataset': 'ICU',
-        'test_dataset': 'Ohio',
+        'train_dataset': 'ICU_train',
+        'test_dataset': 'ICU_test_10',
         'normalize': True,
         'horizon': 3,
-        'snippet_length': 24,
+        'snippet_length': 6,
         'valid': False,
     }
     run(config=debug_config, debug=True)
