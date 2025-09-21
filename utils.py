@@ -187,12 +187,20 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
 
     # plot histograms
     fig, axes = plt.subplots(nrows=len(model_strings), ncols=horizon, figsize=(horizon*5, len(model_strings)*5))
+    
+    # Ensure axes is always a 2D array for consistent indexing
+    if len(model_strings) == 1 and horizon == 1:
+        axes = np.array([[axes]])
+    elif len(model_strings) == 1:
+        axes = axes.reshape(1, -1)
+    elif horizon == 1:
+        axes = axes.reshape(-1, 1)
+    
     max_ylim = 0
     for i, ax in enumerate(axes.flat):
         model_indexer = i//horizon
         delta_t_indexer = i%horizon
         hist_arr = ax.hist(errors_array[model_indexer, delta_t_indexer, :], bins=200)
-        print(i, max(errors_array[model_indexer, delta_t_indexer, :]))
         plt.text(0, 1, f'Mean: {means[model_indexer, delta_t_indexer]:.4f}\nSTD: {stds[model_indexer, delta_t_indexer]:.4f}', ha='left', va='top', transform=ax.transAxes, bbox=dict(fill=True, facecolor='orange', edgecolor='black', linewidth=2))
         max_ylim = max_ylim if max(hist_arr[0])<max_ylim else max(hist_arr[0])
         
@@ -211,11 +219,11 @@ def calculate_error_distributions(df_gt, df_pred, models, horizon=3):
                     size='large', ha='right', va='center')
     
     else:
-        for ax, col in zip(axes, column_titles):
+        for ax, col in zip(axes.flat, column_titles):
             ax.set_title(col)
 
-        axes[0].annotate(model_strings[0], xy=(0, 0.5), xytext=(-axes[0].yaxis.labelpad - 5, 0), 
-                         xycoords=axes[0].yaxis.label, textcoords='offset points',
+        axes.flat[0].annotate(model_strings[0], xy=(0, 0.5), xytext=(-axes.flat[0].yaxis.labelpad - 5, 0), 
+                         xycoords=axes.flat[0].yaxis.label, textcoords='offset points',
                          size='large', ha='right', va='center')
 
     means_stds_array = np.empty(shape=(2*len(model_strings), horizon), dtype=means.dtype)
