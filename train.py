@@ -4,6 +4,8 @@ import os
 import datetime as dt
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+import json
 
 from utils import dataloader
 
@@ -116,7 +118,7 @@ def run(config=None, debug=False):
     # create directory for saving model
     train_id_string = dt.datetime.strftime(dt.datetime.now(), '%Y_%m_%d_%H_%M')+'_'+config['models']+'_'+str(config['snippet_length']-config['horizon'])+'_'+str(config['horizon'])+'_'+str(config['max_steps'])
     if config['enable_checkpointing']:
-        os.makedirs(f'models/{train_id_string}')
+        os.makedirs(f'models/{train_id_string}', exist_ok=True)
         checkpoint_dir = f'models/{train_id_string}'
         
         # Now configure the checkpoint callback with the correct directory
@@ -192,18 +194,66 @@ def run(config=None, debug=False):
     
     try:
         train_loss = nf.models[0].train_trajectories
-        df_train_loss = pd.DataFrame(train_loss, columns=['x', 'y'])
         val_loss = nf.models[0].valid_trajectories
-        df_val_loss = pd.DataFrame(val_loss, columns=['x', 'y'])
         
         if train_loss is not None and val_loss is not None:
-            plt.figure(figsize=(8, 5))
-            plt.plot(df_train_loss['x'], df_train_loss['y'], label='Training Loss')
-            plt.plot(df_val_loss['x'], df_val_loss['y'], label='Validation Loss')
+            plt.figure(figsize=(12, 8))
+            
+            # Calculate moving average window size (approximately one epoch)
+            # Assuming validation checks happen every val_check_steps
+            window_size = max(1, min(500, len(train_loss) // 10))  # Adaptive window size
+            
+            # Apply moving average filter using numpy convolution
+            # Convert to numpy arrays for easier manipulation
+            train_array = np.array(train_loss)
+            val_array = np.array(val_loss)
+            
+            # Apply moving average to y values using numpy convolution
+            if len(train_loss) >= window_size:
+                smoothed_train_y = np.convolve(train_array[:, 1], np.ones(window_size)/window_size, mode='valid')
+                smoothed_train_x = train_array[window_size-1:, 0]
+                smoothed_train_loss = np.column_stack((smoothed_train_x, smoothed_train_y))
+            else:
+                smoothed_train_loss = train_array
+            
+            if len(val_loss) >= window_size:
+                smoothed_val_y = np.convolve(val_array[:, 1], np.ones(window_size)/window_size, mode='valid')
+                smoothed_val_x = val_array[window_size-1:, 0]
+                smoothed_val_loss = np.column_stack((smoothed_val_x, smoothed_val_y))
+            else:
+                smoothed_val_loss = val_array
+            
+            # Scale validation loss to match training loss span using MinMaxScaler
+            scaler = MinMaxScaler()
+            
+            # Get the min and max of training loss for scaling reference
+            train_min = np.min(smoothed_train_loss[:, 1])
+            train_max = np.max(smoothed_train_loss[:, 1])
+            
+            # Scale validation loss to match training loss range
+            val_scaled = scaler.fit_transform(smoothed_val_loss[:, 1].reshape(-1, 1)).flatten()
+            val_scaled = val_scaled * (train_max - train_min) + train_min
+            
+            # Create scaled validation loss array
+            smoothed_val_loss_scaled = np.column_stack((smoothed_val_loss[:, 0], val_scaled))
+            
+            # Convert to DataFrames for plotting
+            df_smoothed_train = pd.DataFrame(smoothed_train_loss, columns=['x', 'y'])
+            df_smoothed_val = pd.DataFrame(smoothed_val_loss_scaled, columns=['x', 'y'])
+            
+            # Plot smoothed training loss (bold)
+            plt.plot(df_smoothed_train['x'], df_smoothed_train['y'], 
+                    color='blue', label=f'Smoothed Training Loss (MA-{window_size})')
+            
+            # Plot scaled smoothed validation loss (bold)
+            plt.plot(df_smoothed_val['x'], df_smoothed_val['y'], 
+                    color='red', label=f'Scaled Smoothed Validation Loss (MA-{window_size})')
+            
             plt.xlabel('Steps')
             plt.ylabel('Loss')
-            plt.title('Training and Validation Loss')
+            plt.title('Training and Validation Loss (with Moving Average Filter)')
             plt.legend()
+            plt.grid(True, alpha=0.3)
             plt.tight_layout()
             train_graph = plt.gcf()
             plt.close()
@@ -231,6 +281,38 @@ def run(config=None, debug=False):
                     'step': best_step,
                     'index': best_train_loss_idx
                 }
+            
+            # Workaround: Save to temp location first, then copy to models directory
+            # This avoids file watchers or cleanup processes that seem to delete files in models subdirectories
+            import tempfile
+            import shutil
+            
+            try:
+                # Save to a temporary file first
+                temp_file = f'temp_losses_{train_id_string}.png'
+                train_graph.savefig(temp_file, dpi=100, bbox_inches='tight')
+                plt.close(train_graph)
+                
+                # Copy to the final destination (use outputs directory to avoid .gitignore)
+                os.makedirs('outputs', exist_ok=True)
+                final_path = f'outputs/losses_{train_id_string}.png'
+                shutil.copy2(temp_file, final_path)
+                
+                # Clean up temp file
+                os.remove(temp_file)
+                
+                # Verify final file exists
+                if os.path.exists(final_path):
+                    file_size = os.path.getsize(final_path)
+                    print(f"  - Loss plot saved to: {final_path} (size: {file_size} bytes)")
+                    
+                else:
+                    print(f"  - Error: Loss plot was not saved to {final_path}")
+                    
+            except Exception as e:
+                print(f"  - Error saving loss plot: {e}")
+                import traceback
+                traceback.print_exc()
         else:
             train_graph = None
     except Exception as e:
@@ -245,7 +327,24 @@ def run(config=None, debug=False):
         print(f"  - Best index: {best_model_info['index']}")
         
         # Save the best model to the desired location
-        best_model_path = f'models/{train_id_string}/best_model_{best_model_info["step"]:02d}_{best_model_info["value"]:.4f}'
+        best_model_path = f'models/{train_id_string}'
+
+        # Construct the filename
+        best_model_filename = f'best_model_{best_model_info["step"]:02d}_{best_model_info["value"]:.4f}.json'
+        best_model_filepath = f'outputs/best_model_{train_id_string}.json'
+        # Convert numpy types to native Python types for JSON serialization
+        best_model_info_serializable = {
+            'metric': best_model_info['metric'],
+            'value': best_model_info['value'].item() if hasattr(best_model_info['value'], 'item') else best_model_info['value'],
+            'step': best_model_info['step'].item() if hasattr(best_model_info['step'], 'item') else best_model_info['step'],
+            'index': best_model_info['index'].item() if hasattr(best_model_info['index'], 'item') else best_model_info['index']
+        }
+        
+        # Dump best_model_info to a JSON file
+        with open(best_model_filepath, 'w') as f:
+            json.dump(best_model_info_serializable, f, indent=4)
+        print(f"  - Best model info saved to: {best_model_filepath}")
+        
         try:
             nf.save(best_model_path, model_index=[0], save_dataset=False, overwrite=True)
             print(f"  - Best model saved to: {best_model_path}")
@@ -265,6 +364,31 @@ def run(config=None, debug=False):
     print("--------Training done--------")
     print("-----------------------------")
     print('\n\n\n')
+
+    # Move files from outputs/ to models/ directory after training is complete
+    print("Moving files to models directory...")
+    try:
+        # Move loss plot if it exists
+        loss_plot_src = f'outputs/losses_{train_id_string}.png'
+        if os.path.exists(loss_plot_src):
+            loss_plot_dst = f'models/{train_id_string}/losses.png'
+            shutil.move(loss_plot_src, loss_plot_dst)
+            print(f"  - Loss plot moved to: {loss_plot_dst}")
+        
+        # Move JSON file if it exists and best_model_info is available
+        json_src = f'outputs/best_model_{train_id_string}.json'
+        if os.path.exists(json_src) and best_model_info is not None:
+            json_dst = f'models/{train_id_string}/best_model_{best_model_info["step"]:02d}_{best_model_info["value"]:.4f}.json'
+            shutil.move(json_src, json_dst)
+            print(f"  - Best model info moved to: {json_dst}")
+        elif os.path.exists(json_src):
+            # Fallback: move with generic name if best_model_info is not available
+            json_dst = f'models/{train_id_string}/best_model_info.json'
+            shutil.move(json_src, json_dst)
+            print(f"  - Best model info moved to: {json_dst}")
+            
+    except Exception as e:
+        print(f"  - Error moving files: {e}")
 
     return nf, train_graph
 
