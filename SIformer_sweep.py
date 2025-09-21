@@ -12,7 +12,7 @@ def experiment():
     
     wandb.init()
     
-    nf = train.run(config=wandb.config)
+    nf, losses_graph = train.run(config=wandb.config)
     prediction_plots, metrics, prediction_hists, means_stds_df = test.run(config=wandb.config, models = nf)
 
     image_test = wandb.Image(prediction_plots, caption='Test plots')
@@ -25,6 +25,7 @@ def experiment():
         'best RMSE': min(metrics['RMSE']),
         'Error distributions': image_hist,
         'Error means and stds': means_stds_df,
+        'Losses graph': wandb.Image(losses_graph, caption='Train and validation losses'),
         }
     )
 
@@ -57,18 +58,26 @@ config = {
             'values': [2]
         },
         'val_check_steps': {
-            'values': [21510]
+            'values': [10000]
         },
         'max_steps': {
-            'values': [200000]
+            'values': [400000]
         },
         'horizon': {
             'values': [3]
+            # 'values': [1]
         },
         'snippet_length': {
-            'values': [24]
+            'values': [6, 9, 15, 24]
+            # 'values': [4, 7, 13, 21]
         },
         'enable_checkpointing': {
+            'values': [True]
+        },
+        'early_stop_patience_steps': {
+            'values': [5]
+        },
+        'padding': {
             'values': [True]
         }
     }
