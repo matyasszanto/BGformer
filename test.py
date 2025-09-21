@@ -47,8 +47,9 @@ def run(config, models = None, debug = False):
     # predict
     Y_hat_df_2 = models.predict(df=Y_df_gt_window_chunked).reset_index()
 
-    # introduce lower bound (0)
+    # rename median column names to the model name and introduce lower bound (0)
     for model in models.models:
+        Y_hat_df_2.rename(columns={f'{model}-median': str(model)}, inplace=True)
         Y_hat_df_2[str(model)] = Y_hat_df_2[str(model)].clip(lower=0.0)
 
     if config['normalize']:
@@ -60,6 +61,8 @@ def run(config, models = None, debug = False):
         # denormalize predicted values
         for model in models.models:
             Y_hat_df_2[str(model)] = data.scaler.inverse_transform(Y_hat_df_2[str(model)].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-lo-0.95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-lo-0.95'].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-hi-0.95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-hi-0.95'].values.reshape(-1,1))
 
     # calculate metrics
     metrics_cols = ['Model Name', 'MAE', 'MSE', 'RMSE']

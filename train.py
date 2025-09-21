@@ -10,6 +10,7 @@ from utils import dataloader
 from statsforecast import StatsForecast
 from neuralforecast import NeuralForecast
 from neuralforecast import core
+from neuralforecast.losses.pytorch import MQLoss
 
 def run(config=None, debug=False):
 
@@ -76,7 +77,8 @@ def run(config=None, debug=False):
                                              n_series=1, 
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
-                                             early_stop_patience_steps=early_stop_patience_steps, 
+                                             early_stop_patience_steps=early_stop_patience_steps,
+                                             loss=MQLoss(level=[0.95]),
                                              **trainer_kwargs
                                              )
                                 )
@@ -88,6 +90,7 @@ def run(config=None, debug=False):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
+                                             loss=MQLoss(level=[0.95]),
                                              **trainer_kwargs
                                              )
                                 )
@@ -98,6 +101,7 @@ def run(config=None, debug=False):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
+                                             loss=MQLoss(level=[0.95]),
                                              **trainer_kwargs
                                              )
                                 )
