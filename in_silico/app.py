@@ -10,7 +10,7 @@ from neuralforecast import NeuralForecast
 
 def load_model(horizon=3, window=3):
     pattern = f"{window}_{horizon}"
-    for subdirectory in os.listdir(f'./models_2025_09_22/horizon_{horizon}'):
+    for subdirectory in os.listdir(f'./models/horizon_{horizon}'):
         full_path = os.path.join('.', subdirectory)
         if os.path.isdir(full_path) and pattern in subdirectory:
             print(full_path)
