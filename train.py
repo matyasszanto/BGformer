@@ -201,7 +201,7 @@ def run(config=None, debug=False):
             
             # Calculate moving average window size (approximately one epoch)
             # Assuming validation checks happen every val_check_steps
-            window_size = max(1, min(500, len(train_loss) // 10))  # Adaptive window size
+            window_size = max(1, min(2500, len(train_loss) // 10))  # Adaptive window size
             
             # Apply moving average filter using numpy convolution
             # Convert to numpy arrays for easier manipulation
