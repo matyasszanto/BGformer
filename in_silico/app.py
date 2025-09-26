@@ -38,7 +38,7 @@ def predict_with_timesnet( si_list_for_pred = []):
 
     pred = np.concatenate([pred1]) if window == 1 else np.concatenate([pred1, pred2, pred3])
 
-    return []
+    return pred
 
 horizon = 3
 window = 3
