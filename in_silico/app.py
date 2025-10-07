@@ -18,7 +18,7 @@ def load_model(horizon=3, window=3):
     return None
 
 
-def predict_with_timesnet( si_list_for_pred = []):
+def predict_with_timesnet( si_list_for_pred = [], high_percent = 95):
 
     # function time
     y = pd.DataFrame(si_list_for_pred, columns=['y'])
@@ -29,12 +29,12 @@ def predict_with_timesnet( si_list_for_pred = []):
     # prediction time
     y_hat = nf.predict(y)
 
-
+    high_key = f'TimesNet-hi-0.{high_percent}'
     # output generation time
-    pred1 = [y_hat['TimesNet-hi-0.95'][0], y_hat['TimesNet-lo-0.95'][0]]
+    pred1 = [y_hat[high_key][0], y_hat['TimesNet-lo-0.95'][0]]
     if horizon == 3:
-        pred2 = [y_hat['TimesNet-hi-0.95'][1], y_hat['TimesNet-lo-0.95'][1]]
-        pred3 = [y_hat['TimesNet-hi-0.95'][2], y_hat['TimesNet-lo-0.95'][2]]
+        pred2 = [y_hat[high_key][1], y_hat['TimesNet-lo-0.95'][1]]
+        pred3 = [y_hat[high_key][2], y_hat['TimesNet-lo-0.95'][2]]
 
     pred = np.concatenate([pred1]) if window == 1 else np.concatenate([pred1, pred2, pred3])
 
@@ -42,6 +42,7 @@ def predict_with_timesnet( si_list_for_pred = []):
 
 horizon = 3
 window = 3
+high_percent = 97
 nf = load_model(horizon=horizon, window=window)
 
 app = Flask(__name__)
@@ -80,7 +81,7 @@ def index():
         pred = []
     else:
         # timesnet prediction
-        pred = predict_with_timesnet(si_list_for_pred=si_list[-3:])
+        pred = predict_with_timesnet(si_list_for_pred=si_list[-horizon:], high_percent=high_percent)
 
     print()
     print(f'pred: {pred} ')
