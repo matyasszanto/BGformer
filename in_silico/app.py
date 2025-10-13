@@ -81,7 +81,7 @@ def index():
         pred = []
     else:
         # timesnet prediction
-        pred = predict_with_timesnet(si_list_for_pred=si_list[-horizon:], high_percent=high_percent)
+        pred = predict_with_timesnet(si_list_for_pred=si_list[-window:], high_percent=high_percent)
 
     print()
     print(f'pred: {pred} ')
