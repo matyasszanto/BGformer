@@ -208,6 +208,7 @@ def run(config=None, debug=False):
     # Try to extract training and validation loss from the model(s)
     train_graph = None
     best_model_info = None
+    nf.models[0].valid_trajectories = nf.models[0].valid_trajectories[1:]
     
     try:
         train_loss = nf.models[0].train_trajectories
