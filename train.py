@@ -107,7 +107,8 @@ def run(config=None, debug=False):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
-                                             loss=MQLoss(level=[0.95]),
+                                             loss=MQLoss(level=[0.95, 0.97, 0.98]),
+                                             lr_scheduler=lr_scheduler,
                                              **trainer_kwargs
                                              )
                                 )
@@ -118,7 +119,7 @@ def run(config=None, debug=False):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
-                                             loss=MQLoss(level=[0.95]),
+                                             loss=MQLoss(level=[0.95, 0.97, 0.98]),
                                              **trainer_kwargs
                                              )
                                 )
@@ -129,7 +130,8 @@ def run(config=None, debug=False):
     )
     
     val_size = config['horizon'] if padding else 0
-    
+    optimizer = Adam(nf.models[0].parameters())
+    nf.models[0].lr_scheduler_kwargs = {"optimizer": optimizer, "T_max": config["max_steps"]/100}
     # create directory for saving model
     train_id_string = dt.datetime.strftime(dt.datetime.now(), '%Y_%m_%d_%H_%M')+'_'+config['models']+'_'+str(config['snippet_length']-config['horizon'])+'_'+str(config['horizon'])+'_'+str(config['max_steps'])
     if config['enable_checkpointing']:
