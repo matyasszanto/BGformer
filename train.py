@@ -13,6 +13,8 @@ from statsforecast import StatsForecast
 from neuralforecast import NeuralForecast
 from neuralforecast import core
 from neuralforecast.losses.pytorch import MQLoss
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim import Adam, AdamW
 
 def run(config=None, debug=False):
 
@@ -44,6 +46,19 @@ def run(config=None, debug=False):
 
     if 'padding' not in config.keys():
         config['padding'] = False
+    
+    if 'save_top_k' not in config.keys():
+        # Number of top checkpoints to keep; default preserves previous behavior
+        config['save_top_k'] = 20
+
+    # if 'lr_scheduler' not in config.keys():
+    #     config['lr_scheduler'] = CosineAnnealingLR
+
+    if 'optimizer' not in config.keys():
+        config['optimizer'] = 'Adam'
+
+    lr_scheduler = CosineAnnealingLR
+
         
     model_strings_array = [config['models']] if isinstance(config['models'], str) else config['models']
     models_array = []
@@ -63,7 +78,7 @@ def run(config=None, debug=False):
 
     data = dataloader(config=config, train=True)
     Y_df = data.find_all_continuous_snippets(hours=config['snippet_length'])
-    
+    # Y_df = Y_df[:32*config['snippet_length']]
     horizon_hours = config['horizon'] # length of horizon in hours
     
     freq = 'h' # h or min
