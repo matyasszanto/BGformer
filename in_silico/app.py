@@ -9,6 +9,16 @@ from neuralforecast import NeuralForecast
 import pytorch_lightning as pl
 
 
+original_init = pl.Trainer.__init__
+
+def patched_init(self, *args, **kwargs):
+    kwargs['logger'] = False
+    kwargs['enable_checkpointing'] = False
+    return original_init(self, *args, **kwargs)
+
+pl.Trainer.__init__ = patched_init
+
+
 def load_model(horizon=3, window=3):
     pattern = f"{window}_{horizon}"
     for subdirectory in os.listdir(f'./models/horizon_{horizon}'):
@@ -25,15 +35,6 @@ def predict_with_timesnet( si_list_for_pred = [], high_percent = 95):
     y = pd.DataFrame(si_list_for_pred, columns=['y'])
     y['ds'] = pd.date_range(start='2020-01-01 00:00:00', periods=len(si_list_for_pred), freq='H')
     y['unique_id'] = 'uid_a'
-
-    original_init = pl.Trainer.__init__
-
-    def patched_init(self, *args, **kwargs):
-        kwargs['logger'] = False
-        kwargs['enable_checkpointing'] = False
-        return original_init(self, *args, **kwargs)
-
-    pl.Trainer.__init__ = patched_init
 
 
     # prediction time
