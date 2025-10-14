@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-import pathlib
+import pytorch_lightning as pl
 
 from utils import dataloader, connect_gt_and_pred, calculate_error_distributions
 
@@ -13,6 +13,15 @@ from neuralforecast.losses.numpy import mae, mse, rmse
 
 
 def run(config, models = None, debug = False):
+    
+    # Disable Lightning logging before any operations
+    original_init = pl.Trainer.__init__
+    def patched_init(self, *args, **kwargs):
+        kwargs['logger'] = False
+        kwargs['enable_checkpointing'] = False
+        return original_init(self, *args, **kwargs)
+    
+    pl.Trainer.__init__ = patched_init
     
     if debug:
         # load pretrained model
