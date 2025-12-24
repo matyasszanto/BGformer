@@ -2,16 +2,16 @@ import train, test
 
 config = {
     "models": "TimesNet",
-    'train_dataset': 'ICU_test_10',
+    'train_dataset': 'ICU_train_10',
     'test_dataset': 'ICU_test_10',
     'normalize': True,
-    'max_steps': 1,
-    'val_check_steps': 99,
-    'horizon': 1,
-    'snippet_length': 7,
+    'max_steps': 2000,
+    'val_check_steps': 100,
+    'horizon': 3,
+    'snippet_length': 24,
     'TN_topk': 2,
     'enable_checkpointing': True,
-    'early_stop_patience_steps': 5,
+    'early_stop_patience_steps': 1000,
     'padding': True,
 }
 

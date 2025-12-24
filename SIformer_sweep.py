@@ -58,10 +58,10 @@ config = {
             'values': [2]
         },
         'val_check_steps': {
-            'values': [10000]
+            'values': [1000]
         },
         'max_steps': {
-            'values': [400000]
+            'values': [50000]
         },
         'horizon': {
             'values': [3]
@@ -75,7 +75,7 @@ config = {
             'values': [True]
         },
         'early_stop_patience_steps': {
-            'values': [5]
+            'values': [400]
         },
         'padding': {
             'values': [True]

@@ -18,14 +18,14 @@ def run(config, models = None, debug = False):
     original_init = pl.Trainer.__init__
     def patched_init(self, *args, **kwargs):
         kwargs['logger'] = False
-        kwargs['enable_checkpointing'] = False
+        kwargs['enable_checkpointing'] = config['enable_checkpointing']
         return original_init(self, *args, **kwargs)
     
     pl.Trainer.__init__ = patched_init
     
     if debug:
         # load pretrained model
-        models = NeuralForecast.load(path='models/2025_09_21_08_23_TimesNet_3_3_400000')
+        models = NeuralForecast.load(path='models/2025_10_09_00_02_TimesNet_21_3_10000')
     
     elif models == None:
         print('No models were supplied, exiting!')
@@ -38,6 +38,7 @@ def run(config, models = None, debug = False):
 
     data = dataloader(config=config, train=False, valid=False)
     Y_df = data.find_all_continuous_snippets(hours=snippet_length)
+    # Y_df = Y_df[:32*snippet_length]
 
     # drop last horizon length y values for prediction
     ids_to_drop = [i for i in range(len(Y_df)) if i % snippet_length >= snippet_length-horizon]
@@ -70,8 +71,8 @@ def run(config, models = None, debug = False):
         # denormalize predicted values
         for model in models.models:
             Y_hat_df_2[str(model)] = data.scaler.inverse_transform(Y_hat_df_2[str(model)].values.reshape(-1,1))
-            Y_hat_df_2[f'{model}-lo-0.95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-lo-0.95'].values.reshape(-1,1))
-            Y_hat_df_2[f'{model}-hi-0.95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-hi-0.95'].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-lo-95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-lo-95'].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-hi-95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-hi-95'].values.reshape(-1,1))
 
     # calculate metrics
     metrics_cols = ['Model Name', 'MAE', 'MSE', 'RMSE']
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         'test_dataset': 'ICU_test_10',
         'normalize': True,
         'horizon': 3,
-        'snippet_length': 6,
-        'valid': False,
+        'snippet_length': 24,
+        'valid': False, 
     }
     run(config=debug_config, debug=True)
