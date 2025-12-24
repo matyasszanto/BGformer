@@ -147,7 +147,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
     optimizer = Adam(nf.models[0].parameters())
     nf.models[0].lr_scheduler_kwargs = {"optimizer": optimizer, "T_max": config["max_steps"]/100}
     # create directory for saving model
-    train_id_string = dt.datetime.strftime(dt.datetime.now(), '%Y_%m_%d_%H_%M')+'_'+config['models']+'_'+str(config['snippet_length']-config['horizon'])+'_'+str(config['horizon'])+'_'+str(config['max_steps'])
+    train_id_string = dt.datetime.strftime(dt.datetime.now(), '%Y_%m_%d_%H_%M_%S')+'_'+config['models']+'_'+str(config['snippet_length']-config['horizon'])+'_'+str(config['horizon'])+'_'+str(config['max_steps'])
     if config['enable_checkpointing']:
         os.makedirs(f'models/{train_id_string}', exist_ok=True)
         checkpoint_dir = f'models/{train_id_string}'
@@ -227,18 +227,34 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
     try:
         train_loss = nf.models[0].train_trajectories
         val_loss = nf.models[0].valid_trajectories
-        
+            
         if train_loss is not None and val_loss is not None:
             plt.figure(figsize=(12, 8))
             
             # Calculate moving average window size (approximately one epoch)
             # Assuming validation checks happen every val_check_steps
-            window_size = max(1, min(2500, len(train_loss) // 10))  # Adaptive window size
+            window_size = max(1, min(2500, len(train_loss) // 10))
+            # different value for validation
+            val_window_size = max(1, min(2500, len(val_loss) // 10))
+            # window_size = 1 # for debugging
             
             # Apply moving average filter using numpy convolution
             # Convert to numpy arrays for easier manipulation
             train_array = np.array(train_loss)
             val_array = np.array(val_loss)
+
+            for i, loss in enumerate(train_array):
+                if loss[1] > 30:
+                    try:
+                        train_array[i][1] = train_array[i-1][1]
+                    # erroneous_batch = Y_df[i*32*config['snippet_length']:(i+1)*32*config['snippet_length']-1]
+                    # print(f'Erroneous batch at index {i}')
+                    # print(erroneous_batch)
+                    # right_batch = Y_df[(i-1)*32*config['snippet_length']:i*32*config['snippet_length']-i*32*config['snippet_length']-1]
+                    # print(f'Right batch at index {i-1}')
+                    # print(right_batch)
+                    except:
+                        pass
             
             # Apply moving average to y values using numpy convolution
             if len(train_loss) >= window_size:
@@ -248,9 +264,9 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
             else:
                 smoothed_train_loss = train_array
             
-            if len(val_loss) >= window_size:
-                smoothed_val_y = np.convolve(val_array[:, 1], np.ones(window_size)/window_size, mode='valid')
-                smoothed_val_x = val_array[window_size-1:, 0]
+            if len(val_loss) >= val_window_size:
+                smoothed_val_y = np.convolve(val_array[:, 1], np.ones(val_window_size)/val_window_size, mode='valid')
+                smoothed_val_x = val_array[val_window_size-1:, 0]
                 smoothed_val_loss = np.column_stack((smoothed_val_x, smoothed_val_y))
             else:
                 smoothed_val_loss = val_array
@@ -279,7 +295,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
             
             # Plot scaled smoothed validation loss (bold)
             plt.plot(df_smoothed_val['x'], df_smoothed_val['y'], 
-                    color='red', label=f'Scaled Smoothed Validation Loss (MA-{window_size})')
+                    color='red', label=f'Scaled Smoothed Validation Loss (MA-{val_window_size})')
             
             plt.xlabel('Steps')
             plt.ylabel('Loss')
