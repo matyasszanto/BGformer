@@ -16,21 +16,21 @@ from neuralforecast.losses.pytorch import MQLoss
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.optim import Adam, AdamW
 
-def run(config=None, debug=False):
+def run(config=None, debug=False, overfit_size=None, dataframe = None):
 
     if debug:
         config = {
             "models": "TimesNet",
-            'train_dataset': 'ICU_test_10',
+            'train_dataset': 'ICU_train',
             'test_dataset': 'ICU_test_10',
             'normalize': True,
-            'max_steps': 3000,
-            'val_check_steps': 1500,
+            'max_steps': 200,
+            'val_check_steps': 40,
             'horizon': 3,
-            'snippet_length': 6,
+            'snippet_length': 24,
             'TN_topk': 2,
             'enable_checkpointing': True,
-            'early_stop_patience_steps': 5,
+            'early_stop_patience_steps': 100,
             'padding': True,
         }
 
@@ -76,10 +76,24 @@ def run(config=None, debug=False):
         'enable_checkpointing': True
     }
 
-    data = dataloader(config=config, train=True)
-    Y_df = data.find_all_continuous_snippets(hours=config['snippet_length'])
-    # Y_df = Y_df[:32*config['snippet_length']]
+    # if dataframe is provided, use it. Otherwise, initialize a new dataloader and find all continuous snippets
+    if dataframe is not None:
+        Y_df = dataframe
+    else:
+        print('--------------------------------')
+        print('---Initializing dataloader...---')
+        data = dataloader(config=config, train=True)
+        Y_df = data.find_all_continuous_snippets(hours=config['snippet_length'])
+        print('---Dataloader initialized-------')
+        print('--------------------------------')
+    
     horizon_hours = config['horizon'] # length of horizon in hours
+    
+    if overfit_size is not None:
+        Y_df = Y_df[:overfit_size*32*config['snippet_length']]
+        Y_df.to_csv('Y_df_overfit.csv')
+
+    loss = MQLoss(level=[95, 97, 98])
     
     freq = 'h' # h or min
     horizon = horizon_hours if freq=='h' else 90
@@ -411,6 +425,6 @@ def run(config=None, debug=False):
     return nf, train_graph
 
 if __name__ == '__main__':
-    _,  graph = run(debug=True)
+    _,  graph = run(debug=True, overfit_size=4)
     graph.savefig(fname='train_graph.png')
     
