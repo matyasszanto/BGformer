@@ -109,7 +109,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
-                                             loss=MQLoss(level=[0.95]),
+                                             loss=loss,
                                              **trainer_kwargs
                                              )
                                 )
@@ -121,7 +121,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
-                                             loss=MQLoss(level=[0.95, 0.97, 0.98]),
+                                             loss=loss,
                                              lr_scheduler=lr_scheduler,
                                              **trainer_kwargs
                                              )
@@ -133,7 +133,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
                                              val_check_steps=val_check_steps, 
                                              start_padding_enabled=padding,
                                              early_stop_patience_steps=early_stop_patience_steps,
-                                             loss=MQLoss(level=[0.95, 0.97, 0.98]),
+                                             loss=loss,
                                              **trainer_kwargs
                                              )
                                 )
@@ -407,11 +407,6 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
         except Exception as e:
             print(f"  - Error saving final model: {e}")
 
-    print('\n\n\n')
-    print("-----------------------------")
-    print("--------Training done--------")
-    print("-----------------------------")
-    print('\n\n\n')
 
     # Move files from outputs/ to models/ directory after training is complete
     print("Moving files to models directory...")
@@ -437,6 +432,12 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
             
     except Exception as e:
         print(f"  - Error moving files: {e}")
+
+    print('\n\n\n')
+    print("-----------------------------")
+    print("--------Training done--------")
+    print("-----------------------------")
+    print('\n\n\n')
 
     return nf, train_graph
 
