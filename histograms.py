@@ -34,9 +34,11 @@ def main(t_in=1, quantile_in=95):
 
     #%% Setup
     # Load merged dataframe
-    csv_file = f'{model_name}_12_3_50k_all.csv'
-    merged = pd.read_csv(f'data/{csv_file}')
-    train_window = csv_file.split('_')[-4]
+    # csv_file = f'{model_name}_12_3_50k_all.csv'
+    # merged = pd.read_csv(f'data/{csv_file}')
+    # train_window = csv_file.split('_')[-4]
+    merged = pd.read_csv('results/latest_4_results/2025_12_23_05_14_57_TimesNet_21_3_50000/results3_3/TimesNet_21_3_3_50k_all.csv')
+    train_window = 21
 
     merged = merged[t::horizon]
 
@@ -180,7 +182,7 @@ def main(t_in=1, quantile_in=95):
     ax2.set_title(f'Z=0 Top View: Curves for {model_name} & Stochastic Model')
     ax2.legend()
     # plt.tight_layout()
-    plt.savefig(f'histograms/{model_name}_{train_window}_{horizon}_{quantile}_at_t{t}.png'.format(model_name), dpi=300)
+    plt.savefig(f'histograms/{model_name}_{train_window}_{horizon}_{quantile}_at_t{t}_2.png'.format(model_name), dpi=300)
 
 
 if __name__ == "__main__":
