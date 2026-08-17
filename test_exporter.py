@@ -19,6 +19,7 @@ config = {
         'snippet_length': 6,
         'train_dataset': 'ICU_train',
         'test_dataset': 'ICU_test_10',
+        'MQLoss_quantile': 90,
 }
 
 # model_path = 'models/2025_12_23_03_01_32_TimesNet_3_3_50000'

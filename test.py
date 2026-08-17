@@ -67,12 +67,14 @@ def run(config, models = None, debug = False):
         # denormalize GT values
         Y_df_gt_horizon['y'] = data.scaler.inverse_transform(Y_df_gt_horizon['y'].values.reshape(-1,1))
         Y_df['y'] = data.scaler.inverse_transform(Y_df['y'].values.reshape(-1,1))
+
+        quantile = config['MQLoss_quantile']
         
         # denormalize predicted values
         for model in models.models:
             Y_hat_df_2[str(model)] = data.scaler.inverse_transform(Y_hat_df_2[str(model)].values.reshape(-1,1))
-            Y_hat_df_2[f'{model}-lo-95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-lo-95'].values.reshape(-1,1))
-            Y_hat_df_2[f'{model}-hi-95'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-hi-95'].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-lo-{quantile}'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-lo-{quantile}'].values.reshape(-1,1))
+            Y_hat_df_2[f'{model}-hi-{quantile}'] = data.scaler.inverse_transform(Y_hat_df_2[f'{model}-hi-{quantile}'].values.reshape(-1,1))
 
     # calculate metrics
     metrics_cols = ['Model Name', 'MAE', 'MSE', 'RMSE']

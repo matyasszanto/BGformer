@@ -79,6 +79,9 @@ config = {
         },
         'padding': {
             'values': [True]
+        },
+        'MQLoss_quantile': {
+            'values': [90]
         }
     }
 }

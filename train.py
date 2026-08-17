@@ -32,6 +32,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
             'enable_checkpointing': True,
             'early_stop_patience_steps': 100,
             'padding': True,
+            'MQLoss_quantile': 90,
         }
 
     if config['models'] == []:
@@ -57,6 +58,9 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
     if 'optimizer' not in config.keys():
         config['optimizer'] = 'Adam'
 
+    if 'MQLoss_quantile' not in config.keys():
+        config['MQLoss_quantile'] = 90
+
     lr_scheduler = CosineAnnealingLR
 
         
@@ -66,6 +70,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
     val_check_steps = config['val_check_steps']
     padding = config['padding']
     early_stop_patience_steps = config['early_stop_patience_steps'] if padding else -1
+    MQLoss_quantile = config['MQLoss_quantile']
     
     # Configure trainer to save only the best model based on validation loss
     from pytorch_lightning.callbacks import ModelCheckpoint
@@ -93,7 +98,7 @@ def run(config=None, debug=False, overfit_size=None, dataframe = None):
         Y_df = Y_df[:overfit_size*32*config['snippet_length']]
         Y_df.to_csv('Y_df_overfit.csv')
 
-    loss = MQLoss(level=[95, 97, 98])
+    loss = MQLoss(level=[MQLoss_quantile])
     
     freq = 'h' # h or min
     horizon = horizon_hours if freq=='h' else 90
